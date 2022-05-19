@@ -1,0 +1,9 @@
+---
+searchFiles:
+  - example/data/sample_search.csv
+collisionEnergies:
+  PR487_Michele_20180611_B07_rep1: 33
+nFlips: 5
+outputFolder: example/output
+scanFiles:
+  - example/data/PR487_Michele_20180611_B07_rep1.mgf
