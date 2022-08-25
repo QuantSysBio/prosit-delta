@@ -2,7 +2,7 @@ from setuptools import setup
 
 setup(
     name='deltapro',
-    version=0.1,
+    version=0.2,
     packages=['deltapro'],
     description='Predicting sensitivity of Prosit to permutation.',
     author='John Cormican',
@@ -33,7 +33,7 @@ setup(
         'python-dateutil==2.8.2',
         'pytz==2022.1',
         'PyYAML==6.0',
-        'scikit-learn==1.1.0',
+        'scikit-learn==1.1.1',
         'scipy==1.8.1',
         'six==1.16.0',
         'sklearn==0.0',

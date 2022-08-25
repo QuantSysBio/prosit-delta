@@ -2,7 +2,7 @@
 """
 import numpy as np
 import pandas as pd
-from pyopenms import MSExperiment, MzMLFile # pylint: disable-msg=E0611
+# from pyopenms import MSExperiment, MzMLFile # pylint: disable-msg=E0611
 
 # from spire.constants import INTENSITIES_KEY, MZS_KEY, SCAN_KEY, SOURCE_KEY
 

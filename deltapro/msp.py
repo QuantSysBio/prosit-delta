@@ -104,12 +104,14 @@ def get_mods_from_msp_comment(line, sequence):
     sequence : str
         The sequence with any modifications added.
     """
+
     regex_match = re.match(
-        r'(.*?) ModString=(.*?)//(.*?)/(.*?)',
+        r'(.*?) Collision_energy=(.*?) Mods=(.*?) ModString=(.*?)//(.*?)/(.*?)',
         line
     )
+    collision_energy = int(float(regex_match.group(2)))
 
-    mods = regex_match.group(3)
+    mods = regex_match.group(5)
 
     if mods:
         mods_list = mods.split('; ')
@@ -122,11 +124,11 @@ def get_mods_from_msp_comment(line, sequence):
                 mod_seq += "(ox)"
                 previous_ind = pos
         mod_seq += sequence[previous_ind:]
-        return mod_seq
+        return mod_seq, collision_energy
 
-    return sequence
+    return sequence, collision_energy
 
-def msp_to_df(msp_filename):
+def msp_to_df(msp_filename, with_ce=False):
     """ Function to process an msp file and extract relevant information
         for training into csv format (tab separated).
 
@@ -147,6 +149,8 @@ def msp_to_df(msp_filename):
         charges = []
         ion_intensities = []
         modified_sequences = []
+        if with_ce:
+            ces = []
 
         while line:
             if line.startswith('Name: '):
@@ -157,7 +161,7 @@ def msp_to_df(msp_filename):
 
                 line = msp_file.readline()
                 assert line.startswith('Comment: ')
-                modified_sequence = get_mods_from_msp_comment(line, sequence)
+                modified_sequence, ce = get_mods_from_msp_comment(line, sequence)
 
                 line = msp_file.readline()
                 assert line.startswith('Num peaks: ')
@@ -168,6 +172,8 @@ def msp_to_df(msp_filename):
                 peptides.append(sequence)
                 charges.append(charge)
                 modified_sequences.append(modified_sequence)
+                if with_ce:
+                   ces.append(ce)
 
             line = msp_file.readline()
 
@@ -178,5 +184,7 @@ def msp_to_df(msp_filename):
                 PROSIT_IONS_KEY: ion_intensities,
             }
         )
+        if with_ce:
+            ion_df['collisionEnergy'] = pd.Series(ces)
 
     return ion_df

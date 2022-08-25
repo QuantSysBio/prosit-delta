@@ -12,8 +12,10 @@ def calculate_mass_diff(df_row):
 def finalise_input(folder):
     
     for tt in ('test', 'train'):
+        print(f'{tt.title()} Data...')
         all_dfs = []
         for idx in range(1, 6):
+            print(f'Set {idx}')
             feated_df = pd.read_csv(f'{folder}/{tt}FeatedData{idx}.csv')
             feated_df = feated_df.rename(columns={f'flipInd{idx}': 'flipInd'})
             feated_df['specAngleDiff'] = feated_df[f'flipSpectralAngle{idx}'] - feated_df['spectralAngle']
@@ -49,8 +51,11 @@ def finalise_input(folder):
 
             all_dfs.append(feated_df[[
                 'peptide',
+                'source',
+                'collisionEnergy',
                 'spectralAngle',
                 'flipInd',
+                'charge',
                 'nFlip',
                 'cFlip',
                 'blosumDiff',
@@ -85,6 +90,10 @@ def finalise_input(folder):
                 'bErrsAtN',
                 'yErrsAtLoc',
                 'bErrsAtLoc',
+                'flipBNewIntensity',
+                'flipYNewIntensity',
+                'matchedCoverage',
+                'nMatchedDivFrags',
                 'specAngleDiff',
             ]])
         total_df = pd.concat(all_dfs)

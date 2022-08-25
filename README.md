@@ -6,7 +6,7 @@ Predicting the sensitivity of Prosit to amino acid permutaiton.
 1) To start with create a new conda environment with python version 3.8:
 
 ```
-conda create --name deltapro python=3.8
+conda create --name deltapro python=3.9
 ```
 
 2) Activate the environment:
