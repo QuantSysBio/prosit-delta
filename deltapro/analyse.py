@@ -136,20 +136,16 @@ def get_imp_trace(config):
         y=imp_df['feature'],
         orientation='h',
         marker_color='black',
+        name='Feature Importance'
     )
 
 def plot_best_performance(config):
-    preds_df = pd.read_csv(f'ip_benchmark/output/predictions.csv')
+    preds_df = pd.read_csv(f'{config.output_folder}/testPreds.csv')
     preds_df['locint'] = preds_df['bIntesAtLoc'] + preds_df['yIntesAtLoc']
 
     return [
-        # ff.create_2d_density(
-        #     preds_df[f'predictedDiff{config.best_model}'],
-        #     preds_df['specAngleDiff'],
-        #     # colorscale=colorscale, hist_color='rgb(255, 237, 222)', point_size=3
-        # )['data'],
         go.Scatter(
-            x=preds_df[f'predictedDiff'],
+            x=preds_df[f'predictedDiff{config.best_model}'],
             y=preds_df['specAngleDiff'],
             mode = 'markers',
             marker_color=preds_df['locint'],
@@ -158,9 +154,10 @@ def plot_best_performance(config):
             marker_cmin=0,
             marker_cmax=1,
             marker_colorbar={'x':0.4, 'y':0.5, 'len': 0.25, 'ticks': 'outside'},
+            name='Test Data',
         ),
         go.Scatter(
-            x=preds_df[f'predictedDiff'],
+            x=preds_df[f'predictedDiff{config.best_model}'],
             y=preds_df['specAngleDiff'],
             mode = 'markers',
             marker_color=preds_df['spectralAngle'],
@@ -168,19 +165,9 @@ def plot_best_performance(config):
             marker_colorscale='Bluered',
             marker_cmin=0,
             marker_cmax=1,
-            marker_colorbar={'y':0.5, 'len': 0.25, 'ticks': 'outside'}
+            marker_colorbar={'y':0.5, 'len': 0.25, 'ticks': 'outside'},
+            name='Test Data',
         ),
-        # go.Scatter(
-        #     x=preds_df[f'predictedDiff{config.best_model}'],
-        #     y=preds_df['specAngleDiff'],
-        #     mode = 'markers',
-        #     marker_color=preds_df['relPos'],#.apply(len),
-        #     marker_showscale=True,
-        #     marker_colorscale='Bluered',
-        #     # marker_cmin=7,
-        #     # marker_cmax=30,
-        #     marker_colorbar={'x':0.42, 'y':0.125, 'len': 0.25, 'ticks': 'outside'}
-        # ),
     ]
 
 
@@ -197,10 +184,10 @@ def analyse(config):
             'Model Size with Depth',
             'Coloured by Intensity at Location',
             'Coloured by Spectral Angle',
+            'Feature Importances'
         ],
         vertical_spacing=0.14,
         horizontal_spacing=0.2,
-        # figsize=(15,15),
     )
 
     for trace in perf_trace:
@@ -225,12 +212,6 @@ def analyse(config):
         )
     if config.best_model is not None:
         traces = plot_best_performance(config)
-        # for trace in traces[0]:
-        #     fig.add_trace(
-        #         trace,
-        #         row=2,
-        #         col=1,
-        #     )
         fig.add_trace(
             traces[0],
             row=2,
@@ -245,7 +226,7 @@ def analyse(config):
     fig.add_trace(
         imp_trace,
         row=3,
-        col=2,
+        col=1,
     )
 
     if config.best_model is not None:
@@ -270,8 +251,6 @@ def analyse(config):
         linecolor='black',
         showgrid=False,
         ticks="outside",
-        # tickson="boundaries",
-        # ticklen=20
     )
     fig.update_yaxes(
         showline=True,
@@ -280,18 +259,17 @@ def analyse(config):
         showgrid=False,
         ticks="outside",
     )
+    models_df = pd.read_csv(
+        f'{config.output_folder}/modelPerformance.csv'
+    )
     fig.update_layout(    
         {    
-            'yaxis':{'range': [0, 1]},
-            'yaxis2':{'range': [0, 500]},
-            'yaxis3':{'range': [-1, 1]},
-            'yaxis4':{'range': [-1, 1],},
-            'yaxis5':{'range': [-1, 1],},
-            'xaxis3':{'range': [-1, 1]},
-            'xaxis4':{'range': [-1, 1],},
-            'xaxis5':{'range': [-1, 1],},
-            # 'yaxis5':{'range': [0, 5_000]},
-            # 'yaxis6':{'range': [0, 5_500],},
+            'yaxis':{'range': [0, 1], 'title_text': 'Performance'},
+            'yaxis3':{'range': [-1, 1], 'title_text': 'True Delta'},
+            'yaxis4':{'range': [-1, 1], 'title_text': 'True Delta'},
+            'xaxis3':{'range': [-1, 1], 'title_text': 'Predicted Delta'},
+            'xaxis4':{'range': [-1, 1], 'title_text': 'Predicted Delta'},
+            'yaxis2':{'range': [0, ceil(models_df['modelSize']/1_048_576)]},
         }
     )
     fig.show()

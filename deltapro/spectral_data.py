@@ -60,15 +60,9 @@ def process_spectral_data(config):
 
     all_scans = []
     for scan_file in config.scan_files:
-        print(scan_file)
-        if scan_file.endswith('.mgf'):
-            scans_df = process_mgf_file(scan_file, set(flip_df['scan'].tolist()))    
-        # else:
-        #     scans_df = process_mzml_file(scan_file, flip_df['scan'].tolist())
+        scans_df = process_mgf_file(scan_file, set(flip_df['scan'].tolist()))
         all_scans.append(scans_df)
     total_scans_df = pd.concat(all_scans)
-
-    print(flip_df.shape)
 
     flip_df = pd.merge(
         flip_df,
@@ -76,18 +70,9 @@ def process_spectral_data(config):
         how='inner',
         on=['source', 'scan']
     )
-    # flip_df['jsonIntensities'] = flip_df['Intensities'].apply(lambda x : json.dumps(list(x)))
-    # flip_df['jsonMZs'] = flip_df['MZs'].apply(lambda x : json.dumps(list(x)))
-    # # flip_df.to_csv(f'{config.output_folder}/merged.csv', index=False)
-    # flip_df = pd.read_csv(f'{config.output_folder}/merged.csv')
-    # flip_df['Intensities'] = flip_df['jsonIntensities'].apply(lambda x : np.array(json.loads(x)))
-    # flip_df['MZs'] = flip_df['jsonMZs'].apply(lambda x : np.array(json.loads(x)))
-    print(flip_df.shape)
-    print(f'Splitting DF into {config.n_cores} chunks...')
     list_df = np.array_split(flip_df, 2)
 
-    n_cores = config.n_cores
-    print(n_cores)
+    n_cores = min(config.n_cores, 2)
 
     results = []
     for chunk_idx, flip_df in enumerate(list_df):

@@ -125,16 +125,16 @@ def hpt_job(train_df):
     return searched_cv
 
 def train_model(config):
-    train_df = pd.read_csv(f'{config.folder}/trainData.csv')
+    train_df = pd.read_csv(f'{config.output_folder}/trainData.csv')
     train_df = train_df.fillna(0)
-    test_df = pd.read_csv(f'{config.folder}/testData.csv')
+    test_df = pd.read_csv(f'{config.output_folder}/testData.csv')
     test_df = test_df.fillna(0)
 
     train_df = edit_features(train_df)
     test_df = edit_features(test_df)
     all_performances_stats = []
 
-    if config.run_hyperparameter_tuning:
+    if config.tune_hyperparameters:
         searched_cv = hpt_job(train_df)
         print('\n All results:')
         print(searched_cv.cv_results_)
@@ -155,14 +155,14 @@ def train_model(config):
             test_df, test_stats = assess_model(model, test_df, 'test', entry)
             model_stats = {**train_stats, **test_stats}
 
-            model_size = save_model(model, config.folder, entry)
-            save_importances(model, config.folder, entry)
+            model_size = save_model(model, config.output_folder, entry)
+            save_importances(model, config.output_folder, entry)
             model_stats['modelSize'] = model_size
             model_stats['identifier'] = entry
 
             all_performances_stats.append(model_stats)
 
         perf_df = pd.DataFrame(all_performances_stats)
-        perf_df.to_csv(f'{config.folder}/modelPerformance.csv', index=False)
-        train_df.to_csv(f'{config.folder}/trainPreds.csv', index=False)
-        test_df.to_csv(f'{config.folder}/testPreds.csv', index=False)
+        perf_df.to_csv(f'{config.output_folder}/modelPerformance.csv', index=False)
+        train_df.to_csv(f'{config.output_folder}/trainPreds.csv', index=False)
+        test_df.to_csv(f'{config.output_folder}/testPreds.csv', index=False)

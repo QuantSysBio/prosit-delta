@@ -50,7 +50,7 @@ def main():
     """
     args = get_arguments()
     config = Config(args.config_file)
-    config.validate()
+    config.validate(args.pipeline)
 
     if args.pipeline == 'flipSequences':
         generate_flipped_data(

@@ -129,12 +129,7 @@ def calculate_features(folder, config):
     train_inds, test_inds = next(split)
     train = spec_df.iloc[train_inds]
     test = spec_df.iloc[test_inds]
-    print('split data')
-    print(train.shape, test.shape)
 
-    # func_args = [(train, test, idx, folder, config.scan_files) for idx in range(1, 6)]
-    # pool = Pool(processes=1)
-    # results = pool.starmap(process_chunk, func_args)
     for idx in range(1, 6):
         process_chunk(train, test, idx, folder, config.scan_files)
 

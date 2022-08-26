@@ -44,7 +44,7 @@ class Config:
         self.optimised_settings = config_dict.get(
             'optimisedSettings',
             {
-                'default': {
+                'Default': {
                     'min_child_weight': 2,
                     'max_depth': 16,
                     'learning_rate': 0.15,
@@ -60,7 +60,7 @@ class Config:
         if not os.path.exists(f'{self.output_folder}/model'):
             os.makedirs(f'{self.output_folder}/model')
 
-    def validate(self):
+    def validate(self, pipeline):
         """ Check that the appropriate Config values have been set for the executed pipeline.
         """
         if self.output_folder is None:
@@ -86,4 +86,9 @@ class Config:
         if self.output_folder is None:
             raise ValueError(
                 'You must specify collisionEnergies in the config.'
+            )
+    
+        if self.best_model is None and pipeline == 'analyse':
+            raise ValueError(
+                'You must provide a best model to analyse.'
             )

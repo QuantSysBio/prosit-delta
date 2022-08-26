@@ -112,8 +112,6 @@ def generate_flipped_data(search_files, n_flips, output_folder, collision_energi
     )
     search_df = search_df[search_df['peptide'].apply(lambda x : isinstance(x, str))]
 
-    print(search_df['collision_energy'].value_counts())
-
     search_df = search_df.apply(lambda x : flip_n(x, n_flips), axis=1)
 
     flip_cols = []

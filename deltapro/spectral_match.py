@@ -200,9 +200,6 @@ def match_prosit_to_observed(df_row, peptide_key, prosit_key, mz_accuracy, mz_un
             df_row['matchedCoverage'] = len(set(b_inds+y_rev_inds))/n_frags
         df_row['prositMatchedIons'] = matched_intensities
     except Exception as e:
-        if isinstance(sequence, str):
-            print(sequence)
-            print(e)
         df_row['prositMatchedIons'] = None
         if peptide_key.startswith('flip'):
             flip_no = int(peptide_key[-1])
