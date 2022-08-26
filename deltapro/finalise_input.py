@@ -10,7 +10,6 @@ def calculate_mass_diff(df_row):
     return abs(RESIDUE_WEIGHTS[df_row['cFlip']] - RESIDUE_WEIGHTS[df_row['nFlip']])
 
 def finalise_input(folder):
-    
     for tt in ('test', 'train'):
         all_dfs = []
         for idx in range(1, 6):
@@ -49,8 +48,11 @@ def finalise_input(folder):
 
             all_dfs.append(feated_df[[
                 'peptide',
+                'source',
+                'collisionEnergy',
                 'spectralAngle',
                 'flipInd',
+                'charge',
                 'nFlip',
                 'cFlip',
                 'blosumDiff',
@@ -65,8 +67,6 @@ def finalise_input(folder):
                 'relPos',
                 'yIntesAtC',
                 'bIntesAtC',
-                'cNeighbourOxidation',
-                'nNeighbourOxidation',
                 'cOxidation',
                 'nOxidation',
                 'yIntesAtN',
@@ -85,6 +85,10 @@ def finalise_input(folder):
                 'bErrsAtN',
                 'yErrsAtLoc',
                 'bErrsAtLoc',
+                'flipBNewIntensity',
+                'flipYNewIntensity',
+                'matchedCoverage',
+                'nMatchedDivFrags',
                 'specAngleDiff',
             ]])
         total_df = pd.concat(all_dfs)

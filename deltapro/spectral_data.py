@@ -1,13 +1,15 @@
 import json
 from math import acos, pi
+import multiprocessing
 from operator import gt
+import os
 
 import numpy as np
 import pandas as pd
 
 from deltapro.mgf import process_mgf_file
 from deltapro.msp import msp_to_df
-from deltapro.mzml import process_mzml_file
+# from deltapro.mzml import process_mzml_file
 from deltapro.spectral_match import match_prosit_to_observed
 
 def normed_dot_product(true, predicted):
@@ -50,19 +52,17 @@ def calculate_spectral_angle(true, predicted, limit=None):
     except:
         return None
 
-def process_spectral_data(folder, scan_files):
-    flip_df = pd.read_csv(f'{folder}/flippedSeqs.csv')
+
+
+def process_spectral_data(config):
+    flip_df = pd.read_csv(f'{config.output_folder}/flippedSeqs.csv')
     flip_df['scan'] = flip_df['scan'].apply(lambda x : int(x.split(':')[-1]) if isinstance(x, str) else x)
 
     all_scans = []
-    for scan_file in scan_files:
-        if scan_file.endswith('.mgf'):
-            scans_df = process_mgf_file(scan_file, flip_df['scan'].tolist())    
-        else:
-            scans_df = process_mzml_file(scan_file, flip_df['scan'].tolist())
+    for scan_file in config.scan_files:
+        scans_df = process_mgf_file(scan_file, set(flip_df['scan'].tolist()))
         all_scans.append(scans_df)
     total_scans_df = pd.concat(all_scans)
-
 
     flip_df = pd.merge(
         flip_df,
@@ -70,9 +70,25 @@ def process_spectral_data(folder, scan_files):
         how='inner',
         on=['source', 'scan']
     )
+    list_df = np.array_split(flip_df, 2)
 
+    n_cores = min(config.n_cores, 2)
+
+    results = []
+    for chunk_idx, flip_df in enumerate(list_df):
+        results.append(process_chunk(flip_df, chunk_idx, config.output_folder, config))
+
+    all_dfs = []
+    for entry in results:
+        all_dfs.append(pd.read_csv(entry))
+    total_flip_df = pd.concat(all_dfs)
+    total_flip_df.to_csv(f'{config.output_folder}/spectralData.csv', index=False)
+    for entry in results:
+        os.remove(entry)
+
+def process_chunk(flip_df, chunk_id, folder, config):
+    print(f'Running chunk {chunk_id}, size {flip_df.shape[0]}')
     for idx in range(1, 6):
-
         msp_df = msp_to_df(f'{folder}/prositPredictions{idx}.msp').rename(
             columns={
                 'modified_sequence': f'flip{idx}',
@@ -91,7 +107,7 @@ def process_spectral_data(folder, scan_files):
         )
 
         flip_df = flip_df.apply(
-            lambda x : match_prosit_to_observed(x, f'flip{idx}', f'flip{idx}PrositIons'),
+            lambda x : match_prosit_to_observed(x, f'flip{idx}', f'flip{idx}PrositIons', 0.03, 'Da'),
             axis=1
         )
 
@@ -104,7 +120,7 @@ def process_spectral_data(folder, scan_files):
 
 
 
-    msp_df = msp_to_df(f'{folder}/prositPredictions0.msp').rename(
+    msp_df = msp_to_df(f'{folder}/prositPredictions0.msp', with_ce=True).rename(
         columns={
             'modified_sequence': 'peptide',
             'Z': 'charge',
@@ -121,7 +137,7 @@ def process_spectral_data(folder, scan_files):
     )
 
     flip_df = flip_df.apply(
-        lambda x : match_prosit_to_observed(x, 'peptide', 'prositIons'),
+        lambda x : match_prosit_to_observed(x, 'peptide', 'prositIons', 0.03, 'Da'),
         axis=1
     )
     flip_df['spectralAngle'] = flip_df.apply(
@@ -136,24 +152,38 @@ def process_spectral_data(folder, scan_files):
         'peptide',
         'charge',
         'spectralAngle',
+        'collisionEnergy',
+        'matchedCoverage',
+        'nMatchedDivFrags',
         'source',
         'scan',
         'flip1',
         'flipInd1',
+        'flipYNewIntensity1',
+        'flipBNewIntensity1',
         'flipSpectralAngle1',
         'flip2',
         'flipInd2',
+        'flipYNewIntensity2',
+        'flipBNewIntensity2',
         'flipSpectralAngle2',
         'flip3',
         'flipInd3',
+        'flipYNewIntensity3',
+        'flipBNewIntensity3',
         'flipSpectralAngle3',
         'flip4',
         'flipInd4',
+        'flipYNewIntensity4',
+        'flipBNewIntensity4',
         'flipSpectralAngle4',
         'flip5',
         'flipInd5',
+        'flipYNewIntensity5',
+        'flipBNewIntensity5',
         'flipSpectralAngle5',
         'prositIons',
         'prositMatchedIons',
     ]]
-    flip_df.to_csv(f'{folder}/spectralData.csv', index=False)
+    flip_df.to_csv(f'{folder}/spectralData{chunk_id}.csv', index=False)
+    return f'{folder}/spectralData{chunk_id}.csv'

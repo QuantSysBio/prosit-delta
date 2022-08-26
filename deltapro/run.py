@@ -2,6 +2,7 @@ from argparse import ArgumentParser
 import random
 
 import numpy as np
+from deltapro.analyse import analyse
 
 from deltapro.config import Config
 from deltapro.calculate_features import calculate_features
@@ -18,6 +19,7 @@ PIPELINE_OPTIONS = [
     'flipSequences',
     'preprocess',
     'train',
+    'analyse',
 ]
 
 def get_arguments():
@@ -48,7 +50,7 @@ def main():
     """
     args = get_arguments()
     config = Config(args.config_file)
-    config.validate()
+    config.validate(args.pipeline)
 
     if args.pipeline == 'flipSequences':
         generate_flipped_data(
@@ -60,11 +62,10 @@ def main():
 
     if args.pipeline == 'preprocess':
         process_spectral_data(
-            config.output_folder,
-            config.scan_files,
+            config,
         )
         calculate_features(
-            config.output_folder,
+            config.output_folder, config
         )
         finalise_input(
             config.output_folder,
@@ -72,7 +73,12 @@ def main():
 
     if args.pipeline == 'train':
         train_model(
-            config.output_folder,
+            config,
+        )
+
+    if args.pipeline == 'analyse':
+        analyse(
+            config,
         )
 
 if __name__ == '__main__':

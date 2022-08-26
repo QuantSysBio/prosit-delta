@@ -1,7 +1,14 @@
 import json
+import numpy as np
 import pandas as pd
 
 from sklearn.model_selection import train_test_split
+from sklearn.model_selection import GroupShuffleSplit 
+import multiprocessing
+from multiprocessing import Pool
+from deltapro.constants import MZ_ACCURACY
+from deltapro.mgf import process_mgf_file
+from deltapro.spectral_match import get_ion_mzs, get_matches
 
 
 def get_intes_at_loc(pep_len, true_ions, loc, letter):
@@ -9,9 +16,8 @@ def get_intes_at_loc(pep_len, true_ions, loc, letter):
     if letter == 'y':
         loc = pep_len - loc
     for charge in ['', '^2', '^3']:
-        for loss in ['', '-NH3', '-H2O']:
-            code = letter + str(loc) + charge + loss
-            sum_inte += true_ions.get(code, 0.0)
+        code = letter + str(loc) + charge
+        sum_inte += true_ions.get(code, 0.0)
     return sum_inte
 
 def get_err_at_loc(pep_len, matched_ions, prosit_ions, loc, letter):
@@ -19,9 +25,8 @@ def get_err_at_loc(pep_len, matched_ions, prosit_ions, loc, letter):
     if letter == 'y':
         loc = pep_len - loc
     for charge in ['', '^2', '^3']:
-        for loss in ['', '-NH3', '-H2O']:
-            code = letter + str(loc) + charge + loss
-            sum_err += abs(matched_ions.get(code, 0.0) - prosit_ions.get(code, 0.0))
+        code = letter + str(loc) + charge
+        sum_err += abs(matched_ions.get(code, 0.0) - prosit_ions.get(code, 0.0))
 
     return sum_err
 
@@ -92,7 +97,11 @@ def create_features(df_row, data_ind):
         df_row['yErrsAtC'] = get_err_at_loc(pep_len, prosit_matched_ions, prosit_ions, index+1, 'y')
         df_row['bErrsAtC'] = get_err_at_loc(pep_len, prosit_matched_ions, prosit_ions, index+1, 'b')
 
-    except:
+        df_row['flipYNewIntensity'] = df_row[f'flipYNewIntensity{data_ind}']
+        df_row['flipBNewIntensity'] = df_row[f'flipBNewIntensity{data_ind}']
+
+    except Exception as e:
+        # print(e)
         df_row['nFlip'] = 'x'
     return df_row
 
@@ -107,26 +116,38 @@ def stratify(x):
         return 3
     return 4
 
-def calculate_features(folder):
+def calculate_features(folder, config):
     """ Function to compute all of the input feature for the deltapro predictor.
     """
     spec_df = pd.read_csv(f'{folder}/spectralData.csv')
     spec_df['prositIons'] = spec_df['prositIons'].apply(json.loads)
     spec_df['prositMatchedIons'] = spec_df['prositMatchedIons'].apply(json.loads)
     spec_df['saStrata'] = spec_df['spectralAngle'].apply(stratify)
-    train, test = train_test_split(spec_df, test_size=0.2, stratify=spec_df['saStrata'])
-
+    # train, test = train_test_split(spec_df, test_size=0.2, stratify=spec_df['saStrata'])
+    splitter = GroupShuffleSplit(test_size=.20, n_splits=2, random_state=42)
+    split = splitter.split(spec_df, groups=spec_df['peptide'])
+    train_inds, test_inds = next(split)
+    train = spec_df.iloc[train_inds]
+    test = spec_df.iloc[test_inds]
 
     for idx in range(1, 6):
-        train = train.apply(
-            lambda x : create_features(x, idx),
-            axis=1,
-        )
-        train = train[train['nFlip'] != 'x']
-        train.drop(['prositIons', 'prositMatchedIons'], axis=1).to_csv(f'{folder}/trainFeatedData{idx}.csv', index=False)
-        test = test.apply(
-            lambda x : create_features(x, idx),
-            axis=1,
-        )
-        test = test[test['nFlip'] != 'x']
-        test.drop(['prositIons', 'prositMatchedIons'], axis=1).to_csv(f'{folder}/testFeatedData{idx}.csv', index=False)
+        process_chunk(train, test, idx, folder, config.scan_files)
+
+def process_chunk(train, test, idx, folder, scan_files):
+    print(idx)
+
+    print(train.shape)
+
+    train = train.apply(
+        lambda x : create_features(x, idx),
+        axis=1,
+    )
+    train = train[train['nFlip'] != 'x']
+    train.drop(['prositIons', 'prositMatchedIons'], axis=1).to_csv(f'{folder}/trainFeatedData{idx}.csv', index=False)
+
+    test = test.apply(
+        lambda x : create_features(x, idx),
+        axis=1,
+    )
+    test = test[test['nFlip'] != 'x']
+    test.drop(['prositIons', 'prositMatchedIons'], axis=1).to_csv(f'{folder}/testFeatedData{idx}.csv', index=False)

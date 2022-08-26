@@ -6,12 +6,6 @@ import numpy as np
 import pandas as pd
 from pyteomics import mgf
 
-# from caravan.constants import (
-#     INTENSITIES_KEY,
-#     MZS_KEY,
-#     SCAN_KEY,
-#     SOURCE_KEY,
-# )
 
 def process_mgf_file(mgf_filename, scan_ids, scan_file_format=None, source_list=None):
     """ Function to process an mgf file to find matches with scan IDs.
@@ -20,7 +14,7 @@ def process_mgf_file(mgf_filename, scan_ids, scan_file_format=None, source_list=
     ----------
     mgf_filename : str
         The mgf file from which we are reading.
-    scan_ids : list of int
+    scan_ids : set of int
         A list of the scan IDs we require.
     scan_file_format : str
         The format of the file used.

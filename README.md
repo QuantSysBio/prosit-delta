@@ -6,7 +6,7 @@ Predicting the sensitivity of Prosit to amino acid permutaiton.
 1) To start with create a new conda environment with python version 3.8:
 
 ```
-conda create --name deltapro python=3.8
+conda create --name deltapro python=3.9
 ```
 
 2) Activate the environment:
@@ -49,7 +49,13 @@ deltapro --config_file example/config.yml --pipeline preprocess
 deltapro --config_file example/config.yml --pipeline train
 ```
 
-Note that this model is trained on less than 100 PSMs and is for illustrative purpouses only.
+Note that this model is trained on less than 100 PSMs and is for illustrative purpouses only. To see an example of the analysis plots possible run
+
+```
+deltapro --config_file example/config.yml --pipeline analyse
+```
+
+Again bear in mind that this is a toy dataset.
 
 ## Execution
 
